@@ -11,12 +11,12 @@ pub fn random_graph(n: usize, m: usize, seed: Option<usize>, print: bool) -> Gra
 
     let seed = seed.unwrap_or_else(|| rand::thread_rng().gen());
 
-    eprintln!("# seed: {seed}");
+    eprintln!("seed = {seed}");
 
     let mut rng = rand::rngs::StdRng::seed_from_u64(seed.try_into().unwrap());
 
     let mut k = 0;
-    while k <= m {
+    while k < m {
         let v = rng.gen_range(0..(n-1));
         let w = rng.gen_range((v+1)..n);
         if !d.has_edge(v.into(), w.into()) {
@@ -26,7 +26,7 @@ pub fn random_graph(n: usize, m: usize, seed: Option<usize>, print: bool) -> Gra
     }
 
     if print {
-        eprintln!("{:?}", Dot::with_config(&d, &[Config::NodeNoLabel, Config::EdgeNoLabel]));
+        println!("{:?}", Dot::with_config(&d, &[Config::NodeNoLabel, Config::EdgeNoLabel]));
     }
 
     let mut g = Graph::new(n.into());
