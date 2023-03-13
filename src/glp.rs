@@ -146,5 +146,5 @@ pub fn deltas<SP: GLPSubProc>(input: SP::Input) -> impl Iterator<Item = SP::Delt
 }
 
 pub fn states<SP: GLPSubProc>(input: SP::Input) -> impl Iterator<Item = impl Deref<Target = SP>> {
-    GLPIterStates::<SP>::start(input)
+    GLPIterStates::<SP, GLPLoop>::start(input)
 }
