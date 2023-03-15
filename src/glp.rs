@@ -7,28 +7,6 @@ pub trait GLPSubProc {
     fn execute(&mut self, i: usize) -> (bool, Self::Delta);
 }
 
-struct GLPState<SP: GLPSubProc>(Rc<SP>);
-
-impl<SP: GLPSubProc> Clone for GLPState<SP> {
-    fn clone(&self) -> Self {
-        GLPState(self.0.clone())
-    }
-}
-
-impl<SP: GLPSubProc> GLPSubProc for GLPState<SP> {
-    type Input = SP::Input;
-    type Delta = SP::Delta;
-
-    fn start(input: Self::Input) -> (usize, Self) {
-        let (n, proc) = SP::start(input);
-        (n, GLPState(Rc::new(proc)))
-    }
-
-    fn execute(&mut self, i: usize) -> (bool, Self::Delta) {
-        Rc::get_mut(&mut self.0).unwrap().execute(i)
-    }
-}
-
 trait GLPIterator {
     fn start(n: usize) -> Self;
     fn next<SP: GLPSubProc>(&mut self, proc: &mut SP) -> Option<SP::Delta>;
@@ -104,6 +82,28 @@ impl<SP: GLPSubProc, I: GLPIterator> Iterator for GLPIter<SP, I> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next(&mut self.proc)
+    }
+}
+
+struct GLPState<SP: GLPSubProc>(Rc<SP>);
+
+impl<SP: GLPSubProc> Clone for GLPState<SP> {
+    fn clone(&self) -> Self {
+        GLPState(self.0.clone())
+    }
+}
+
+impl<SP: GLPSubProc> GLPSubProc for GLPState<SP> {
+    type Input = SP::Input;
+    type Delta = SP::Delta;
+
+    fn start(input: Self::Input) -> (usize, Self) {
+        let (n, proc) = SP::start(input);
+        (n, GLPState(Rc::new(proc)))
+    }
+
+    fn execute(&mut self, i: usize) -> (bool, Self::Delta) {
+        Rc::get_mut(&mut self.0).unwrap().execute(i)
     }
 }
 
