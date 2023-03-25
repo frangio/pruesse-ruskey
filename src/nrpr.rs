@@ -4,7 +4,7 @@ use crate::graph::Graph;
 use bit_vec::BitVec;
 
 #[derive(Debug)]
-enum Move {
+pub enum Move {
     None,
     Swap(usize, usize),
     FlipSign,
@@ -73,7 +73,7 @@ impl NRPR {
 
 impl GLPSubProc for NRPR {
     type Input = Graph;
-    type Delta = ();
+    type Delta = Move;
 
     fn start(g: Self::Input) -> (usize, Self) {
         let n = g.size();
@@ -140,19 +140,23 @@ impl GLPSubProc for NRPR {
         } = self;
 
         if i == k {
-            if k > 0 {
+            let m = if k > 0 {
                 let p = 2 * k - 2;
                 l.swap(ix[p], ix[p + 1]);
                 ix.swap(p, p + 1);
-            }
+                Move::Swap(ix[p], ix[p + 1])
+            } else {
+                Move::None
+            };
             s[k] = false;
-            (false, ())
+            (false, m)
         } else {
             let ji = j[2 * i];
             let (i1, i2) = sorted(ix[2 * i], ix[2 * i + 1]);
 
             let m = next_move(|v, w| self.adj[edge_pos(n, v, w)], e[i], s[i], &l[ji..], i1 - ji, i2 - ji);
-            match m {
+
+            let m = match m {
                 Move::Swap(a, b) => {
                     let a = ji + a;
                     let b = ji + b;
@@ -163,6 +167,7 @@ impl GLPSubProc for NRPR {
                     if a == ix[2 * i + 1] {
                         ix[2 * i + 1] = b;
                     }
+                    Move::Swap(a, b)
                 },
                 Move::FlipSign => {
                     s[i] = !s[i];
@@ -170,14 +175,15 @@ impl GLPSubProc for NRPR {
                         let p = 2 * i - 2;
                         l.swap(ix[p], ix[p + 1]);
                         ix.swap(p, p + 1);
+                        Move::Swap(ix[p], ix[p + 1])
+                    } else {
+                        Move::FlipSign
                     }
                 },
                 Move::None => {
                     unreachable!();
-                    // break;
-                    // return (false, ())
                 }
-            }
+            };
 
             let (i1, i2) = sorted(ix[2 * i], ix[2 * i + 1]);
 
@@ -188,7 +194,7 @@ impl GLPSubProc for NRPR {
                 true
             };
 
-            (vi, ())
+            (vi, m)
         }
     }
 }
