@@ -1,4 +1,4 @@
-#![allow(dead_code, unused_imports)]
+#![allow(dead_code, unused_imports, unused_variables)]
 
 mod glp;
 mod nrpr;
@@ -6,35 +6,72 @@ mod graph;
 mod backtracking;
 mod random;
 
-use glp::states;
+use glp::{states, deltas, GLPLoop, GLPLoopFree};
+use graph::Graph;
 use nrpr::NRPR;
-use random::random_graph;
+use rand::Rng;
+use random::{random_graph, make_rng};
 
-use std::time::Instant;
+use std::{time::Instant, sync::{Mutex, Arc}};
 
-fn main() {
-    let n = 20;
-    let m = 3 * n;
-
-    let g = random_graph(n, m, None, true);
-
-    let now = Instant::now();
-
+fn count_backtracking(g: Graph) -> usize {
     let mut total = 0;
-
-    for s in states::<NRPR>(g) {
-        println!("{total}: {} {:?}", if s.s[0] { "+" } else { "-" }, s.l);
+    let mut t = backtracking::Traversals::new(g);
+    for _ in &mut t {
         total += 1;
     }
+    total
+}
 
-    println!("total={total}", total = total/2);
+fn count_nrpr_loop_free(g: Graph) -> usize {
+    let mut total = 0;
+    for _ in deltas::<NRPR, GLPLoopFree>(g) {
+        total += 1;
+    }
+    total / 2
+}
 
-    // // traversals
-    // let mut t = backtracking::Traversals::new(g);
-    // for t0 in &mut t {
-    //     println!("{t0:?}");
-    // }
+fn main() {
+    let mut rng = make_rng(None);
 
-    let elapsed = now.elapsed();
-    println!("{elapsed:.2?}")
+    let pool = threadpool::Builder::new().build();
+
+    for i in 0..250 {
+        let seed = rng.gen();
+
+        pool.execute(move || {
+            let g = random_graph(Some(seed), None, None, false);
+
+            let n = g.size();
+            let m = g.edge_count();
+
+            let mut backtracking_elapsed = 0.0;
+            let mut loop_free_elapsed = 0.0;
+            let mut total = 0;
+
+            let v = 2;
+
+            for j in 0..v {
+                match (i + j) % v {
+                    0 => {
+                        let now = Instant::now();
+                        total = count_nrpr_loop_free(g.clone());
+                        loop_free_elapsed = now.elapsed().as_secs_f64();
+                    },
+
+                    1 => {
+                        let now = Instant::now();
+                        total = count_backtracking(g.clone());
+                        backtracking_elapsed = now.elapsed().as_secs_f64();
+                    }
+
+                    _ => unreachable!(),
+                }
+            }
+
+            println!("{{\"backtracking\":{backtracking_elapsed:.?},\"loop_free\":{loop_free_elapsed:.?},\"n\":{n},\"m\":{m},\"total\":{total},\"seed\":{seed}}}");
+        })
+    }
+
+    pool.join()
 }

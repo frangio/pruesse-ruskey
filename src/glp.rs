@@ -7,7 +7,7 @@ pub trait GLPSubProc {
     fn execute(&mut self, i: usize) -> (bool, Self::Delta);
 }
 
-trait GLPIterator {
+pub trait GLPIterator {
     fn start(n: usize) -> Self;
     fn next<SP: GLPSubProc>(&mut self, proc: &mut SP) -> Option<SP::Delta>;
 }
@@ -93,6 +93,14 @@ impl<SP: GLPSubProc> Clone for GLPState<SP> {
     }
 }
 
+impl<SP: GLPSubProc> Deref for GLPState<SP> {
+    type Target = SP;
+
+    fn deref(&self) -> &Self::Target {
+        self.0.deref()
+    }
+}
+
 impl<SP: GLPSubProc> GLPSubProc for GLPState<SP> {
     type Input = SP::Input;
     type Delta = SP::Delta;
@@ -119,14 +127,6 @@ impl<SP: GLPSubProc, I: GLPIterator> GLPIterStates<SP, I> {
     }
 }
 
-impl<SP: GLPSubProc> Deref for GLPState<SP> {
-    type Target = SP;
-
-    fn deref(&self) -> &Self::Target {
-        self.0.deref()
-    }
-}
-
 impl<SP: GLPSubProc, I: GLPIterator> Iterator for GLPIterStates<SP, I> {
     type Item = GLPState<SP>;
 
@@ -140,11 +140,10 @@ impl<SP: GLPSubProc, I: GLPIterator> Iterator for GLPIterStates<SP, I> {
     }
 }
 
-
-pub fn deltas<SP: GLPSubProc>(input: SP::Input) -> impl Iterator<Item = SP::Delta> {
-    GLPIter::<SP>::start(input)
+pub fn deltas<SP: GLPSubProc, I: GLPIterator>(input: SP::Input) -> impl Iterator<Item = SP::Delta> {
+    GLPIter::<SP, I>::start(input)
 }
 
-pub fn states<SP: GLPSubProc>(input: SP::Input) -> impl Iterator<Item = impl Deref<Target = SP>> {
-    GLPIterStates::<SP, GLPLoop>::start(input)
+pub fn states<SP: GLPSubProc, I: GLPIterator>(input: SP::Input) -> impl Iterator<Item = impl Deref<Target = SP>> {
+    GLPIterStates::<SP, I>::start(input)
 }
