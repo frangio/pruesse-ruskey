@@ -1,4 +1,4 @@
-use crate::graph::Graph;
+use topogen::graph::Graph;
 use rand::prelude::*;
 use petgraph::{matrix_graph::DiMatrix, dot::{Dot, Config}, visit::IntoEdgeReferences};
 

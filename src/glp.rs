@@ -147,3 +147,47 @@ pub fn deltas<SP: GLPSubProc, I: GLPIterator>(input: SP::Input) -> impl Iterator
 pub fn states<SP: GLPSubProc, I: GLPIterator>(input: SP::Input) -> impl Iterator<Item = impl Deref<Target = SP>> {
     GLPIterStates::<SP, I>::start(input)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn gray_codes() {
+        struct GrayCode(Vec<bool>);
+
+        impl GrayCode {
+            pub fn bits(&self) -> String {
+                self.0.iter().rev().map(|&b| if b { "1" } else { "0" }).collect::<String>()
+            }
+        }
+
+        impl GLPSubProc for GrayCode {
+            type Input = usize;
+            type Delta = ();
+
+            fn start(n: usize) -> (usize, GrayCode) {
+                (n, GrayCode(vec![false; n]))
+            }
+
+            fn execute(&mut self, i: usize) -> (bool, Self::Delta) {
+                self.0[i] = !self.0[i];
+                (false, ())
+            }
+        }
+
+        fn collect_gray_codes(n: usize) -> Vec<String> {
+            states::<GrayCode, GLPLoopFree>(n).map(|g| g.bits()).collect()
+        }
+
+        assert_eq!(
+            collect_gray_codes(2),
+            vec!["00", "01", "11", "10"],
+        );
+
+        assert_eq!(
+            collect_gray_codes(3),
+            vec!["000", "001", "011", "010", "110", "111", "101", "100"],
+        );
+    }
+}

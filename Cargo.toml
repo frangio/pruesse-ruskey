@@ -3,8 +3,8 @@ name = "topogen"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = ["bench"]
+
 [dependencies]
-rand = "0.8.5"
-petgraph = "0.6.3"
 bit-vec = "0.6.3"
-threadpool = "1.8.1"

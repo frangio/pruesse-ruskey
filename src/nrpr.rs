@@ -65,12 +65,6 @@ pub struct NRPR {
     e: Vec<bool>,
 }
 
-impl NRPR {
-    fn has_edge(&self, v: usize, w: usize) -> bool {
-        self.adj[edge_pos(self.n, v, w)]
-    }
-}
-
 impl GLPSubProc for NRPR {
     type Input = Graph;
     type Delta = Move;
@@ -154,7 +148,7 @@ impl GLPSubProc for NRPR {
             let ji = j[2 * i];
             let (i1, i2) = sorted(ix[2 * i], ix[2 * i + 1]);
 
-            let m = next_move(|v, w| self.adj[edge_pos(n, v, w)], e[i], s[i], &l[ji..], i1 - ji, i2 - ji);
+            let m = next_move(|v, w| adj[edge_pos(n, v, w)], e[i], s[i], &l[ji..], i1 - ji, i2 - ji);
 
             let m = match m {
                 Move::Swap(a, b) => {

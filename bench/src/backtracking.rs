@@ -1,4 +1,4 @@
-use crate::graph::Graph;
+use topogen::graph::Graph;
 
 #[derive(Debug)]
 pub struct Traversals {

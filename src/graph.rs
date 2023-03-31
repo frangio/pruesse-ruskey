@@ -20,15 +20,16 @@ impl Graph {
     }
 
     pub fn add_edge(&mut self, from: usize, to: usize) {
+        assert!(to < self.size());
         self.succ[from].push(to);
         self.edge_count += 1;
     }
 
-    pub fn edges(&'_ self) -> impl Iterator<Item = (usize, usize)> + '_ {
+    pub fn edges(&self) -> impl Iterator<Item = (usize, usize)> + '_ {
         self.succ.iter().enumerate().flat_map(|(v, ws)| ws.iter().map(move |&w| (v, w)))
     }
 
-    pub fn successors(&'_ self, v: usize) -> impl DoubleEndedIterator<Item = usize> + '_ {
+    pub fn successors(&self, v: usize) -> impl DoubleEndedIterator<Item = usize> + '_ {
         self.succ[v].iter().copied()
     }
 }
