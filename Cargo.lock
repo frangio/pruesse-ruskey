@@ -21,16 +21,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "feb20"
-version = "0.1.0"
-dependencies = [
- "bit-vec",
- "petgraph",
- "rand",
- "threadpool",
-]
-
-[[package]]
 name = "fixedbitset"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -141,6 +131,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d050e60b33d41c19108b32cea32164033a9013fe3b46cbd4457559bfbf77afaa"
 dependencies = [
  "num_cpus",
+]
+
+[[package]]
+name = "topogen"
+version = "0.1.0"
+dependencies = [
+ "bit-vec",
+ "petgraph",
+ "rand",
+ "threadpool",
 ]
 
 [[package]]
