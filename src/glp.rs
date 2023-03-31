@@ -12,27 +12,6 @@ pub trait GLPIterator {
     fn next<SP: GLPSubProc>(&mut self, proc: &mut SP) -> Option<SP::Delta>;
 }
 
-pub struct GLPLoop {
-    v: Vec<bool>,
-}
-
-impl GLPIterator for GLPLoop {
-    fn start(n: usize) -> Self {
-        let v = vec![true; n];
-        GLPLoop { v }
-    }
-
-    fn next<SP: GLPSubProc>(&mut self, proc: &mut SP) -> Option<SP::Delta> {
-        let i = self.v.iter().position(|&vi| vi)?;
-        let (vi, d) = proc.execute(i);
-        self.v[i] = vi;
-        for j in 0..i {
-            self.v[j] = true;
-        }
-        Some(d)
-    }
-}
-
 pub struct GLPLoopFree {
     p: Vec<usize>,
 }
@@ -64,20 +43,20 @@ impl GLPIterator for GLPLoopFree {
     }
 }
 
-struct GLPIter<SP: GLPSubProc, I: GLPIterator = GLPLoopFree> {
+struct GLPIter<SP: GLPSubProc> {
     proc: SP,
-    iter: I,
+    iter: GLPLoopFree,
 }
 
-impl<SP: GLPSubProc, I: GLPIterator> GLPIter<SP, I> {
+impl<SP: GLPSubProc> GLPIter<SP> {
     fn start(input: SP::Input) -> Self {
         let (n, proc) = SP::start(input);
-        let iter = I::start(n);
+        let iter = GLPLoopFree::start(n);
         GLPIter { proc, iter }
     }
 }
 
-impl<SP: GLPSubProc, I: GLPIterator> Iterator for GLPIter<SP, I> {
+impl<SP: GLPSubProc> Iterator for GLPIter<SP> {
     type Item = SP::Delta;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -115,19 +94,19 @@ impl<SP: GLPSubProc> GLPSubProc for GLPState<SP> {
     }
 }
 
-struct GLPIterStates<SP: GLPSubProc, I: GLPIterator = GLPLoopFree> {
+struct GLPIterStates<SP: GLPSubProc> {
     started: bool,
-    inner: GLPIter<GLPState<SP>, I>,
+    inner: GLPIter<GLPState<SP>>,
 }
 
-impl<SP: GLPSubProc, I: GLPIterator> GLPIterStates<SP, I> {
+impl<SP: GLPSubProc> GLPIterStates<SP> {
     fn start(input: SP::Input) -> Self {
         let inner = GLPIter::start(input);
         GLPIterStates { inner, started: false }
     }
 }
 
-impl<SP: GLPSubProc, I: GLPIterator> Iterator for GLPIterStates<SP, I> {
+impl<SP: GLPSubProc> Iterator for GLPIterStates<SP> {
     type Item = GLPState<SP>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -140,12 +119,12 @@ impl<SP: GLPSubProc, I: GLPIterator> Iterator for GLPIterStates<SP, I> {
     }
 }
 
-pub fn deltas<SP: GLPSubProc, I: GLPIterator>(input: SP::Input) -> impl Iterator<Item = SP::Delta> {
-    GLPIter::<SP, I>::start(input)
+pub fn deltas<SP: GLPSubProc>(input: SP::Input) -> impl Iterator<Item = SP::Delta> {
+    GLPIter::<SP>::start(input)
 }
 
-pub fn states<SP: GLPSubProc, I: GLPIterator>(input: SP::Input) -> impl Iterator<Item = impl Deref<Target = SP>> {
-    GLPIterStates::<SP, I>::start(input)
+pub fn states<SP: GLPSubProc>(input: SP::Input) -> impl Iterator<Item = impl Deref<Target = SP>> {
+    GLPIterStates::<SP>::start(input)
 }
 
 #[cfg(test)]
@@ -177,7 +156,7 @@ mod tests {
         }
 
         fn collect_gray_codes(n: usize) -> Vec<String> {
-            states::<GrayCode, GLPLoopFree>(n).map(|g| g.bits()).collect()
+            states::<GrayCode>(n).map(|g| g.bits()).collect()
         }
 
         assert_eq!(

@@ -3,7 +3,7 @@
 mod random;
 mod backtracking;
 
-use topogen::glp::{states, deltas, GLPLoop, GLPLoopFree};
+use topogen::glp::deltas;
 use topogen::graph::Graph;
 use topogen::nrpr::NRPR;
 use rand::Rng;
@@ -22,7 +22,7 @@ fn count_backtracking(g: Graph) -> usize {
 
 fn count_nrpr(g: Graph) -> usize {
     let mut total = 0;
-    for _ in deltas::<NRPR, GLPLoopFree>(g) {
+    for _ in deltas::<NRPR>(g) {
         total += 1;
     }
     total / 2
@@ -43,7 +43,7 @@ fn main() {
             let m = g.edge_count();
 
             let mut backtracking_elapsed = 0.0;
-            let mut loop_free_elapsed = 0.0;
+            let mut nrpr_elapsed = 0.0;
             let mut total = 0;
 
             let v = 2;
@@ -53,7 +53,7 @@ fn main() {
                     0 => {
                         let now = Instant::now();
                         total = count_nrpr(g.clone());
-                        loop_free_elapsed = now.elapsed().as_secs_f64();
+                        nrpr_elapsed = now.elapsed().as_secs_f64();
                     },
 
                     1 => {
@@ -66,7 +66,7 @@ fn main() {
                 }
             }
 
-            println!("{{\"backtracking\":{backtracking_elapsed:.?},\"nrpr\":{loop_free_elapsed:.?},\"n\":{n},\"m\":{m},\"total\":{total},\"seed\":{seed}}}");
+            println!("{{\"backtracking\":{backtracking_elapsed:.?},\"nrpr\":{nrpr_elapsed:.?},\"n\":{n},\"m\":{m},\"total\":{total},\"seed\":{seed}}}");
         })
     }
 
