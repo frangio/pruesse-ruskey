@@ -1,4 +1,4 @@
-use crate::glp::GLPSubProc;
+use crate::glp::{GLPSubProc, states};
 use crate::graph::Graph;
 
 use bit_vec::BitVec;
@@ -189,6 +189,63 @@ impl GLPSubProc for NRPR {
             };
 
             (vi, m)
+        }
+    }
+}
+
+pub fn toposorts(g: Graph) -> impl Iterator<Item = Vec<usize>> {
+    states::<NRPR>(g).filter_map(|s| if s.s[0] { Some(s.l.clone()) } else { None })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use proptest::prelude::*;
+    use std::collections::HashSet;
+
+    fn factorial(n: usize) -> usize {
+        let mut result = 1;
+        for i in 1..=n {
+            result *= i;
+        }
+        result
+    }
+
+    fn binomial(n: usize, k: usize) -> usize {
+        if k > n {
+            return 0;
+        }
+        let k = k.min(n - k);
+        let mut result = 1;
+        for i in 0..k {
+            result *= n - i;
+            result /= i + 1;
+        }
+        result
+    }
+
+    #[test]
+    fn test_0_edges() {
+        for n in 2..7 {
+            let g = Graph::new(n);
+            let ts = toposorts(g).collect::<HashSet<_>>();
+            assert_eq!(ts.len(), factorial(n))
+        }
+    }
+
+    fn gen_graph_1_edge(min: usize, max: usize) -> impl Strategy<Value = (usize, usize, usize)> {
+        (min..=max).prop_flat_map(|n| (0..n, 0..n)
+            .prop_filter("v and w must be different", |&(v, w)| v != w)
+            .prop_map(move |(v, w)| (n, v, w)))
+    }
+
+    proptest! {
+        #[test]
+        fn test_1_edge((n, v, w) in gen_graph_1_edge(3, 6)) {
+            let mut g = Graph::new(n);
+            g.add_edge(v, w);
+            let ts = toposorts(g).collect::<HashSet<_>>();
+            assert_eq!(ts.len(), factorial(n) - factorial(n - 2) * binomial(n, n - 2))
         }
     }
 }

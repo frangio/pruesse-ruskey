@@ -8,3 +8,6 @@ members = ["bench"]
 
 [dependencies]
 bit-vec = "0.6.3"
+
+[dev-dependencies]
+proptest = "1.1.0"
