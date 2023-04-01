@@ -1,9 +1,8 @@
 use std::{rc::Rc, ops::Deref};
 
 pub trait GLPSubProc {
-    type Input;
     type Delta;
-    fn start(input: Self::Input) -> (usize, Self);
+    fn size(&self) -> usize;
     fn execute(&mut self, i: usize) -> (bool, Self::Delta);
 }
 
@@ -49,8 +48,8 @@ struct GLPIter<SP: GLPSubProc> {
 }
 
 impl<SP: GLPSubProc> GLPIter<SP> {
-    fn start(input: SP::Input) -> Self {
-        let (n, proc) = SP::start(input);
+    fn run(proc: SP) -> Self {
+        let n = proc.size();
         let iter = GLPLoopFree::start(n);
         GLPIter { proc, iter }
     }
@@ -65,6 +64,12 @@ impl<SP: GLPSubProc> Iterator for GLPIter<SP> {
 }
 
 struct GLPState<SP: GLPSubProc>(Rc<SP>);
+
+impl<SP: GLPSubProc> GLPState<SP> {
+    fn new(proc: SP) -> Self {
+        GLPState(Rc::new(proc))
+    }
+}
 
 impl<SP: GLPSubProc> Clone for GLPState<SP> {
     fn clone(&self) -> Self {
@@ -81,12 +86,10 @@ impl<SP: GLPSubProc> Deref for GLPState<SP> {
 }
 
 impl<SP: GLPSubProc> GLPSubProc for GLPState<SP> {
-    type Input = SP::Input;
     type Delta = SP::Delta;
 
-    fn start(input: Self::Input) -> (usize, Self) {
-        let (n, proc) = SP::start(input);
-        (n, GLPState(Rc::new(proc)))
+    fn size(&self) -> usize {
+        self.0.size()
     }
 
     fn execute(&mut self, i: usize) -> (bool, Self::Delta) {
@@ -100,8 +103,8 @@ struct GLPIterStates<SP: GLPSubProc> {
 }
 
 impl<SP: GLPSubProc> GLPIterStates<SP> {
-    fn start(input: SP::Input) -> Self {
-        let inner = GLPIter::start(input);
+    fn run(proc: SP) -> Self {
+        let inner = GLPIter::run(GLPState::new(proc));
         GLPIterStates { inner, started: false }
     }
 }
@@ -119,12 +122,12 @@ impl<SP: GLPSubProc> Iterator for GLPIterStates<SP> {
     }
 }
 
-pub fn deltas<SP: GLPSubProc>(input: SP::Input) -> impl Iterator<Item = SP::Delta> {
-    GLPIter::<SP>::start(input)
+pub fn deltas<SP: GLPSubProc>(proc: SP) -> impl Iterator<Item = SP::Delta> {
+    GLPIter::run(proc)
 }
 
-pub fn states<SP: GLPSubProc>(input: SP::Input) -> impl Iterator<Item = impl Deref<Target = SP>> {
-    GLPIterStates::<SP>::start(input)
+pub fn states<SP: GLPSubProc>(proc: SP) -> impl Iterator<Item = impl Deref<Target = SP>> {
+    GLPIterStates::run(proc)
 }
 
 #[cfg(test)]
@@ -136,17 +139,20 @@ mod tests {
         struct GrayCode(Vec<bool>);
 
         impl GrayCode {
-            pub fn bits(&self) -> String {
+            fn new(n: usize) -> Self {
+                GrayCode(vec![false; n])
+            }
+
+            fn bits(&self) -> String {
                 self.0.iter().rev().map(|&b| if b { "1" } else { "0" }).collect::<String>()
             }
         }
 
         impl GLPSubProc for GrayCode {
-            type Input = usize;
             type Delta = ();
 
-            fn start(n: usize) -> (usize, GrayCode) {
-                (n, GrayCode(vec![false; n]))
+            fn size(&self) -> usize {
+                self.0.len()
             }
 
             fn execute(&mut self, i: usize) -> (bool, Self::Delta) {
@@ -155,17 +161,17 @@ mod tests {
             }
         }
 
-        fn collect_gray_codes(n: usize) -> Vec<String> {
-            states::<GrayCode>(n).map(|g| g.bits()).collect()
+        fn gray_codes(n: usize) -> Vec<String> {
+            states(GrayCode::new(n)).map(|g| g.bits()).collect()
         }
 
         assert_eq!(
-            collect_gray_codes(2),
+            gray_codes(2),
             vec!["00", "01", "11", "10"],
         );
 
         assert_eq!(
-            collect_gray_codes(3),
+            gray_codes(3),
             vec!["000", "001", "011", "010", "110", "111", "101", "100"],
         );
     }

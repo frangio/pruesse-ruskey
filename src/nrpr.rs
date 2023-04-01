@@ -65,11 +65,8 @@ pub struct NRPR {
     e: Vec<bool>,
 }
 
-impl GLPSubProc for NRPR {
-    type Input = Graph;
-    type Delta = Move;
-
-    fn start(g: Self::Input) -> (usize, Self) {
+impl NRPR {
+    fn new(g: Graph) -> Self {
         let n = g.size();
 
         let mut adj = BitVec::from_elem(n * n, false);
@@ -118,7 +115,15 @@ impl GLPSubProc for NRPR {
         let s = vec![true; k + 1];
         let e = vec![true; k];
 
-        (k + 1, NRPR { n, adj, k, l, j, ix, s, e })
+        NRPR { n, adj, k, l, j, ix, s, e }
+    }
+}
+
+impl GLPSubProc for NRPR {
+    type Delta = Move;
+
+    fn size(&self) -> usize {
+        self.k + 1
     }
 
     fn execute(&mut self, i: usize) -> (bool, Self::Delta) {
@@ -194,7 +199,7 @@ impl GLPSubProc for NRPR {
 }
 
 pub fn toposorts(g: Graph) -> impl Iterator<Item = Vec<usize>> {
-    states::<NRPR>(g).filter_map(|s| if s.s[0] { Some(s.l.clone()) } else { None })
+    states(NRPR::new(g)).filter_map(|s| if s.s[0] { Some(s.l.clone()) } else { None })
 }
 
 #[cfg(test)]
