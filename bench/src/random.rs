@@ -1,4 +1,4 @@
-use topogen::graph::Graph;
+use topogen::graph::Graph0;
 use rand::prelude::*;
 use petgraph::{matrix_graph::DiMatrix, dot::{Dot, Config}, visit::IntoEdgeReferences};
 
@@ -13,7 +13,7 @@ pub fn make_rng(seed: Option<usize>) -> StdRng {
     rand::rngs::StdRng::seed_from_u64(seed.try_into().unwrap())
 }
 
-pub fn random_graph(seed: Option<usize>, n: Option<usize>, m: Option<usize>, print: bool) -> Graph {
+pub fn random_graph(seed: Option<usize>, n: Option<usize>, m: Option<usize>, print: bool) -> Graph0 {
     let mut rng = make_rng(seed);
 
     let n = n.unwrap_or(rng.gen_range(10..55));
@@ -41,7 +41,7 @@ pub fn random_graph(seed: Option<usize>, n: Option<usize>, m: Option<usize>, pri
         println!("{:?}", Dot::with_config(&d, &[Config::NodeNoLabel, Config::EdgeNoLabel]));
     }
 
-    let mut g = Graph::new(n.into());
+    let mut g = Graph0::new(n.into());
 
     for (v, w, ()) in d.edge_references() {
         g.add_edge(v.index(), w.index());
