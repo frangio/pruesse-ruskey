@@ -6,25 +6,26 @@ pub trait GLPSubProc {
     fn execute(&mut self, i: usize) -> (bool, Self::Delta);
 }
 
-trait GLPIterator {
-    fn start(n: usize) -> Self;
-    fn next<SP: GLPSubProc>(&mut self, proc: &mut SP) -> Option<SP::Delta>;
-}
-
-struct GLPLoopFree {
+struct GLPIterator<SP: GLPSubProc> {
+    proc: SP,
     p: Vec<usize>,
 }
 
-impl GLPIterator for GLPLoopFree {
-    fn start(n: usize) -> Self {
+impl<SP: GLPSubProc> GLPIterator<SP> {
+    fn new(proc: SP) -> Self {
+        let n = proc.size();
         let p = vec![0; n];
-        GLPLoopFree { p }
+        GLPIterator { proc, p }
     }
+}
 
-    fn next<SP: GLPSubProc>(&mut self, proc: &mut SP) -> Option<SP::Delta> {
+impl<SP: GLPSubProc> Iterator for GLPIterator<SP> {
+    type Item = SP::Delta;
+
+    fn next(&mut self) -> Option<Self::Item> {
         let n = self.p.len();
         let i = self.p.get(0).copied().filter(|&i| i < n)?;
-        let (vi, d) = proc.execute(i);
+        let (vi, d) = self.proc.execute(i);
         if vi {
             self.p[i] = 0;
         } else if i == n - 1 {
@@ -39,27 +40,6 @@ impl GLPIterator for GLPLoopFree {
             self.p[0] = 0;
         }
         Some(d)
-    }
-}
-
-struct GLPIter<SP: GLPSubProc> {
-    proc: SP,
-    iter: GLPLoopFree,
-}
-
-impl<SP: GLPSubProc> GLPIter<SP> {
-    fn run(proc: SP) -> Self {
-        let n = proc.size();
-        let iter = GLPLoopFree::start(n);
-        GLPIter { proc, iter }
-    }
-}
-
-impl<SP: GLPSubProc> Iterator for GLPIter<SP> {
-    type Item = SP::Delta;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next(&mut self.proc)
     }
 }
 
@@ -99,12 +79,12 @@ impl<SP: GLPSubProc> GLPSubProc for GLPState<SP> {
 
 struct GLPIterStates<SP: GLPSubProc> {
     started: bool,
-    inner: GLPIter<GLPState<SP>>,
+    inner: GLPIterator<GLPState<SP>>,
 }
 
 impl<SP: GLPSubProc> GLPIterStates<SP> {
     fn run(proc: SP) -> Self {
-        let inner = GLPIter::run(GLPState::new(proc));
+        let inner = GLPIterator::new(GLPState::new(proc));
         GLPIterStates { inner, started: false }
     }
 }
@@ -123,7 +103,7 @@ impl<SP: GLPSubProc> Iterator for GLPIterStates<SP> {
 }
 
 pub fn deltas<SP: GLPSubProc>(proc: SP) -> impl Iterator<Item = SP::Delta> {
-    GLPIter::run(proc)
+    GLPIterator::new(proc)
 }
 
 pub fn states<SP: GLPSubProc>(proc: SP) -> impl Iterator<Item = impl Deref<Target = SP>> {
