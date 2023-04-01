@@ -6,12 +6,12 @@ pub trait GLPSubProc {
     fn execute(&mut self, i: usize) -> (bool, Self::Delta);
 }
 
-pub trait GLPIterator {
+trait GLPIterator {
     fn start(n: usize) -> Self;
     fn next<SP: GLPSubProc>(&mut self, proc: &mut SP) -> Option<SP::Delta>;
 }
 
-pub struct GLPLoopFree {
+struct GLPLoopFree {
     p: Vec<usize>,
 }
 
