@@ -1,7 +1,7 @@
 pub mod simple;
 
-#[cfg(feature = "petgraph")]
 mod petgraph;
+mod graph_builder;
 
 pub trait Graph {
     type Edges<'a>: Iterator<Item = (usize, usize)> where Self: 'a;

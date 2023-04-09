@@ -9,6 +9,7 @@ members = ["bench"]
 [dependencies]
 bit-vec = "0.6"
 petgraph = { version = "0.6", optional = true }
+graph_builder = { version = "0.3", optional = true }
 
 [dev-dependencies]
 proptest = "1.1"

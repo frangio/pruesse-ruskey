@@ -1,3 +1,5 @@
+#![cfg(feature = "petgraph")]
+
 use super::Graph;
 use petgraph::Direction;
 use petgraph::visit::{NodeCount, NodeIndexable, IntoEdgeReferences, IntoNeighborsDirected, EdgeRef};
@@ -32,9 +34,9 @@ impl<'a, G: NodeIndexable + IntoNeighborsDirected> Iterator for Successors<'a, G
     }
 }
 
-impl<'a, G: NodeCount + NodeIndexable + IntoEdgeReferences + IntoNeighborsDirected> Graph for G {
-    type Edges<'b> = Edges<'b, G> where G: 'b;
-    type Successors<'b> = Successors<'b, G> where G: 'b;
+impl<G: NodeCount + NodeIndexable + IntoEdgeReferences + IntoNeighborsDirected> Graph for G {
+    type Edges<'a> = Edges<'a, G> where G: 'a;
+    type Successors<'a> = Successors<'a, G> where G: 'a;
 
     fn size(&self) -> usize {
         self.node_count()
@@ -52,12 +54,25 @@ impl<'a, G: NodeCount + NodeIndexable + IntoEdgeReferences + IntoNeighborsDirect
 
 #[cfg(test)]
 mod tests {
+    use petgraph::prelude::*;
     use crate::graph::Graph;
-    use petgraph::prelude as petgraph;
 
     #[test]
-    fn test_graph() {
-        let mut g = petgraph::DiGraph::<(), ()>::new();
+    fn test_size() {
+        let n = 4;
+
+        let mut g = DiGraph::<(), ()>::new();
+        for _ in 0..n {
+            g.add_node(());
+        }
+
+        let size = Graph::size(&&g);
+        assert_eq!(size, n);
+    }
+
+    #[test]
+    fn test_edges() {
+        let mut g = DiGraph::<(), ()>::new();
         for _ in 0..4 {
             g.add_node(());
         }
@@ -71,5 +86,20 @@ mod tests {
 
         let edges: Vec<_> = Graph::edges(&&g).collect();
         assert_eq!(edges, vec![(0, 1), (1, 2), (2, 3)]);
+    }
+
+    #[test]
+    fn test_successors() {
+        let mut g = DiGraph::<(), ()>::new();
+        for _ in 0..3 {
+            g.add_node(());
+        }
+
+        g.add_edge(0.into(), 1.into(), ());
+        g.add_edge(0.into(), 2.into(), ());
+
+        let mut successors: Vec<_> = Graph::successors(&&g, 0).collect();
+        successors.sort();
+        assert_eq!(successors, vec![1, 2]);
     }
 }
