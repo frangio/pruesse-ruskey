@@ -66,7 +66,7 @@ pub struct NRPR {
 }
 
 impl NRPR {
-    fn new<G: Graph>(g: G) -> Self {
+    pub fn new<G: Graph>(g: G) -> Self {
         let n = g.size();
 
         let mut adj = BitVec::from_elem(n * n, false);
@@ -205,7 +205,7 @@ pub fn toposorts<G: Graph>(g: G) -> impl Iterator<Item = Vec<usize>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::graph::Graph0;
+    use crate::graph::simple::SimpleGraph;
     use proptest::prelude::*;
     use std::collections::HashSet;
 
@@ -233,7 +233,7 @@ mod tests {
     #[test]
     fn test_0_edges() {
         for n in 2..7 {
-            let g = Graph0::new(n);
+            let g = SimpleGraph::new(n);
             let ts = toposorts(g).collect::<HashSet<_>>();
             assert_eq!(ts.len(), factorial(n))
         }
@@ -248,7 +248,7 @@ mod tests {
     proptest! {
         #[test]
         fn test_1_edge((n, v, w) in gen_graph_1_edge(3, 6)) {
-            let mut g = Graph0::new(n);
+            let mut g = SimpleGraph::new(n);
             g.add_edge(v, w);
             let ts = toposorts(g).collect::<HashSet<_>>();
             assert_eq!(ts.len(), factorial(n) - factorial(n - 2) * binomial(n, n - 2))

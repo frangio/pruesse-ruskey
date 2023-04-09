@@ -4,14 +4,15 @@ mod random;
 mod backtracking;
 
 use topogen::glp::deltas;
-use topogen::graph::Graph0;
+use topogen::graph::Graph;
+use topogen::graph::simple::SimpleGraph;
 use topogen::nrpr::NRPR;
 use rand::Rng;
 use random::{random_graph, make_rng};
 
 use std::{time::Instant, sync::{Mutex, Arc}};
 
-fn count_backtracking(g: Graph0) -> usize {
+fn count_backtracking(g: SimpleGraph) -> usize {
     let mut total = 0;
     let mut t = backtracking::Traversals::new(g);
     for _ in &mut t {
@@ -20,9 +21,9 @@ fn count_backtracking(g: Graph0) -> usize {
     total
 }
 
-fn count_nrpr(g: Graph0) -> usize {
+fn count_nrpr(g: SimpleGraph) -> usize {
     let mut total = 0;
-    for _ in deltas::<NRPR>(g) {
+    for _ in deltas(NRPR::new(g)) {
         total += 1;
     }
     total / 2

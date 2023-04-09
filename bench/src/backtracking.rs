@@ -1,8 +1,9 @@
-use topogen::graph::Graph0;
+use topogen::graph::Graph;
+use topogen::graph::simple::SimpleGraph;
 
 #[derive(Debug)]
 pub struct Traversals {
-    graph: Graph0,
+    graph: SimpleGraph,
     visits: Vec<Visit>,
     next: Vec<usize>,
     deps: Vec<isize>,
@@ -15,7 +16,7 @@ struct Visit {
 }
 
 impl Traversals {
-    pub fn new(graph: Graph0) -> Self {
+    pub fn new(graph: SimpleGraph) -> Self {
         let n = graph.size();
 
         let visits = Vec::with_capacity(graph.size());

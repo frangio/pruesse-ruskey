@@ -1,24 +1,18 @@
 use std::{slice, iter};
 
-pub trait Graph {
-    type Edges<'a>: Iterator<Item = (usize, usize)> where Self: 'a;
-    type Successors<'a>: Iterator<Item = usize> where Self: 'a;
-    fn size(&self) -> usize;
-    fn edges(&self) -> Self::Edges<'_>;
-    fn successors(&self, v: usize) -> Self::Successors<'_>;
-}
+use super::Graph;
 
 #[derive(Debug, Clone)]
-pub struct Graph0 {
+pub struct SimpleGraph {
     succ: Vec<Vec<usize>>,
     edge_count: usize,
 }
 
-impl Graph0 {
+impl SimpleGraph {
     pub fn new(size: usize) -> Self {
         let succ = vec![vec![]; size];
         let edge_count = 0;
-        Graph0 { succ, edge_count }
+        SimpleGraph { succ, edge_count }
     }
 
     pub fn edge_count(&self) -> usize {
@@ -32,7 +26,7 @@ impl Graph0 {
     }
 }
 
-pub struct Edges<'a>(&'a Graph0, usize, usize);
+pub struct Edges<'a>(&'a SimpleGraph, usize, usize);
 
 impl<'a> Iterator for Edges<'a> {
     type Item = (usize, usize);
@@ -52,7 +46,7 @@ impl<'a> Iterator for Edges<'a> {
     }
 }
 
-impl Graph for Graph0 {
+impl Graph for SimpleGraph {
     type Edges<'a> = Edges<'a>;
     type Successors<'a> = iter::Copied<slice::Iter<'a, usize>>;
 

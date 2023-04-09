@@ -1,6 +1,6 @@
-use topogen::graph::Graph0;
+use topogen::graph::simple::SimpleGraph;
 use rand::prelude::*;
-use petgraph::{matrix_graph::DiMatrix, dot::{Dot, Config}, visit::IntoEdgeReferences};
+use petgraph::{matrix_graph::DiMatrix, dot::{Dot, Config}, visit::IntoEdgeReferences, prelude::DiGraph, data::FromElements};
 
 pub fn make_seed() -> usize {
     let seed = rand::thread_rng().gen();
@@ -13,7 +13,7 @@ pub fn make_rng(seed: Option<usize>) -> StdRng {
     rand::rngs::StdRng::seed_from_u64(seed.try_into().unwrap())
 }
 
-pub fn random_graph(seed: Option<usize>, n: Option<usize>, m: Option<usize>, print: bool) -> Graph0 {
+pub fn random_graph(seed: Option<usize>, n: Option<usize>, m: Option<usize>, print: bool) -> SimpleGraph {
     let mut rng = make_rng(seed);
 
     let n = n.unwrap_or(rng.gen_range(10..55));
@@ -41,7 +41,7 @@ pub fn random_graph(seed: Option<usize>, n: Option<usize>, m: Option<usize>, pri
         println!("{:?}", Dot::with_config(&d, &[Config::NodeNoLabel, Config::EdgeNoLabel]));
     }
 
-    let mut g = Graph0::new(n.into());
+    let mut g = SimpleGraph::new(n.into());
 
     for (v, w, ()) in d.edge_references() {
         g.add_edge(v.index(), w.index());
